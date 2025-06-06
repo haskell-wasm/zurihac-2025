@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Haskell-wasm Demo</title>
+
+    <!-- Full-window black background; canvas scales with the window
+       while keeping its internal resolution fixed at 1920×1080. -->
+    <style>
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+        background: #000;
+      }
+      canvas {
+        display: block;
+        width: 100%;
+        height: 100%;
+      }
+    </style>
+
+    <!-- Load the script as early and asynchronously as possible -->
+    <script async type="module">
+      import {
+        WASI,
+        OpenFile,
+        File,
+        ConsoleStdout,
+      } from "https://cdn.jsdelivr.net/npm/@bjorn3/browser_wasi_shim@0.4.1/+esm";
+      import ghc_wasm_jsffi from "./dist/ghc_wasm_jsffi.js";
+
+      const args = ["lesson5.wasm", "+RTS", "-H512m", "-RTS"];
+      const env = [];
+      const fds = [
+        new OpenFile(new File(new Uint8Array(), { readonly: true })),
+        ConsoleStdout.lineBuffered((msg) =>
+          console.info(`[WASI stdout] ${msg}`)
+        ),
+        ConsoleStdout.lineBuffered((msg) =>
+          console.error(`[WASI stderr] ${msg}`)
+        ),
+      ];
+      const options = { debug: false };
+      const wasi = new WASI(args, env, fds, options);
+
+      const instance_exports = {};
+      const { instance } = await WebAssembly.instantiateStreaming(
+        fetch("./dist/lesson5.wasm"),
+        {
+          wasi_snapshot_preview1: wasi.wasiImport,
+          ghc_wasm_jsffi: ghc_wasm_jsffi(instance_exports),
+        }
+      );
+      Object.assign(instance_exports, instance.exports);
+
+      wasi.initialize(instance);
+
+      // Wait for the DOM to be ready
+      if (document.readyState === "loading") {
+        await new Promise((res) =>
+          document.addEventListener("DOMContentLoaded", res, { once: true })
+        );
+      }
+
+      instance_exports.hsMain();
+    </script>
+  </head>
+
+  <body>
+    <!-- 1080 p canvas (internal size 1920×1080) -->
+    <canvas width="1920" height="1080"></canvas>
+  </body>
+</html>

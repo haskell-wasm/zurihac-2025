@@ -1,0 +1,3 @@
+--command "wasm32-wasi-cabal repl --enable-multi-repl"
+--restart cabal.project
+--restart lesson3.cabal

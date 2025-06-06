@@ -1,0 +1,3 @@
+--command "wasm32-wasi-cabal repl --repl-options=-fno-code"
+--restart cabal.project
+--restart lesson4.cabal

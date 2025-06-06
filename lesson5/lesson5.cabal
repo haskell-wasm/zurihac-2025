@@ -1,0 +1,20 @@
+cabal-version: 3.14
+name: lesson5
+version: 0.1.0.0
+
+executable lesson5
+  build-depends:
+    base,
+    ghc-experimental,
+    JuicyPixels >=3.3.9,
+    vector >=0.13.2.0,
+
+  default-language: GHC2024
+  ghc-options:
+    -Wall
+    -no-hs-main
+    -optl-mexec-model=reactor
+    -optl-Wl,--export=hsMain
+
+  hs-source-dirs: app
+  main-is: Lesson5.hs

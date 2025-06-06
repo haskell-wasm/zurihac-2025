@@ -1,0 +1,22 @@
+cabal-version: 3.14
+name: lesson2
+version: 0.1.0.0
+
+executable lesson2
+  build-depends:
+    base,
+    ghc-experimental,
+    hledger-lib >=1.43.1,
+    lucid2 >=0.0.20250303,
+    text,
+
+  default-language: GHC2024
+  ghc-options:
+    -Wall
+    -Wno-name-shadowing
+    -no-hs-main
+    -optl-mexec-model=reactor
+    -optl-Wl,--export=updateTable
+
+  hs-source-dirs: app
+  main-is: Lesson2.hs

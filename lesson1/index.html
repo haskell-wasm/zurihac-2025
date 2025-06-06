@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>pointfree</title>
+
+    <style>
+      body {
+        font-family: sans-serif;
+        padding: 1rem;
+      }
+      textarea {
+        width: 100%;
+        box-sizing: border-box;
+        margin-bottom: 1rem;
+      }
+      label {
+        font-weight: bold;
+        display: block;
+        margin: 0.5rem 0;
+      }
+    </style>
+
+    <!-- Load the script as early and asynchronously as possible -->
+    <script async type="module">
+      import {
+        WASI,
+        OpenFile,
+        File,
+        ConsoleStdout,
+      } from "https://cdn.jsdelivr.net/npm/@bjorn3/browser_wasi_shim@0.4.1/+esm";
+
+      // Compile once, instantiate each time the CLI is invoked.
+      const module = await WebAssembly.compileStreaming(
+        fetch("./dist/pointfree.wasm")
+      );
+
+      // Wait for the DOM to be ready
+      if (document.readyState === "loading") {
+        await new Promise((res) =>
+          document.addEventListener("DOMContentLoaded", res, { once: true })
+        );
+      }
+
+      const input = document.getElementById("input"),
+        output = document.getElementById("output");
+
+      input.addEventListener("input", async () => {
+        // Pass input/output via stdin/stdout
+
+        const args = ["pointfree.wasm", "--stdin"];
+        const env = [];
+        const stdin_file = new File(new TextEncoder().encode(input.value), {
+            readonly: true,
+          }),
+          stdout_file = new File(new Uint8Array(), { readonly: false });
+        const fds = [
+          new OpenFile(stdin_file),
+          new OpenFile(stdout_file),
+          ConsoleStdout.lineBuffered((msg) =>
+            console.error(`[WASI stderr] ${msg}`)
+          ),
+        ];
+        const options = { debug: false };
+        const wasi = new WASI(args, env, fds, options);
+        const instance = await WebAssembly.instantiate(module, {
+          wasi_snapshot_preview1: wasi.wasiImport,
+        });
+
+        // By default, a self-contained wasm32-wasi module is a
+        // command module (conceptually a CLI). A command module is
+        // started exactly once and runs to completion, then the
+        // instance must not be reused to call an exported function
+        // again. See
+        // https://github.com/WebAssembly/WASI/blob/main/legacy/application-abi.md
+        // for details.
+        wasi.start(instance);
+
+        output.value = new TextDecoder("utf-8", { fatal: true }).decode(
+          stdout_file.data
+        );
+      });
+    </script>
+  </head>
+  <body>
+    <h1>pointfree</h1>
+
+    <label for="input">Input</label>
+    <textarea id="input" rows="10"></textarea>
+
+    <label for="output">Output</label>
+    <textarea id="output" rows="10" readonly></textarea>
+  </body>
+</html>

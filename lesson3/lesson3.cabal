@@ -1,0 +1,30 @@
+cabal-version: 3.14
+name: lesson3
+version: 0.1.0.0
+
+test-suite lesson3
+  build-depends:
+    base,
+    QuickCheck >= 2.15.0.1,
+
+  default-language: GHC2024
+  ghc-options:
+    -Wall
+
+  type: exitcode-stdio-1.0
+  hs-source-dirs: test
+  main-is: lesson3.hs
+
+test-suite lesson3-js
+  build-depends:
+    base,
+    ghc-experimental,
+    QuickCheck >= 2.15.0.1,
+
+  default-language: GHC2024
+  ghc-options:
+    -Wall
+
+  type: exitcode-stdio-1.0
+  hs-source-dirs: test
+  main-is: lesson3-js.hs

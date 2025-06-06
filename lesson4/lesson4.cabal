@@ -1,0 +1,25 @@
+cabal-version: 3.14
+name: lesson4
+version: 0.1.0.0
+
+executable lesson4
+  build-depends:
+    base,
+    bytestring,
+    async >=2.2.5,
+    cryptohash-sha256 >= 0.11.102.1,
+    ghc-experimental,
+    quickcheck-instances >=0.3.32,
+    tasty >=1.5.3,
+    tasty-bench >=0.4.1,
+    tasty-quickcheck >=0.11.1,
+
+  default-language: GHC2024
+  ghc-options:
+    -Wall
+    -no-hs-main
+    -optl-mexec-model=reactor
+    -optl-Wl,--export=hsMain
+
+  hs-source-dirs: app
+  main-is: Lesson4.hs

@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>hledger</title>
+    <style>
+      body {
+        font-family: sans-serif;
+        margin: 2rem;
+      }
+      textarea {
+        width: 100%;
+        height: 10rem;
+        font-family: monospace;
+        white-space: pre;
+        margin-bottom: 1.5rem;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+      th,
+      td {
+        border: 1px solid #ddd;
+        padding: 0.4rem 0.6rem;
+        text-align: left;
+      }
+      th {
+        background: #f4f4f4;
+      }
+      tr:nth-child(even) {
+        background: #fafafa;
+      }
+      /* draw a thick line before each new transaction */
+      tr.txn-header td {
+        border-top: 2px solid #000;
+      }
+      /* indent posting accounts */
+      td.account {
+        padding-left: 2rem;
+      }
+    </style>
+
+    <!-- Load the script as early and asynchronously as possible -->
+    <script async type="module">
+      import {
+        WASI,
+        OpenFile,
+        File,
+        ConsoleStdout,
+        PreopenDirectory,
+      } from "https://cdn.jsdelivr.net/npm/@bjorn3/browser_wasi_shim@0.4.1/+esm";
+      import ghc_wasm_jsffi from "./dist/ghc_wasm_jsffi.js";
+
+      const input = document.getElementById("input"),
+        output = document.getElementById("output");
+
+      const args = ["lesson2.wasm", "+RTS", "-H64m", "-RTS"];
+      const env = [];
+      const in_file = new File(new Uint8Array(), {
+        readonly: true,
+      });
+      const fds = [
+        new OpenFile(new File(new Uint8Array(), { readonly: true })),
+        ConsoleStdout.lineBuffered((msg) =>
+          console.info(`[WASI stdout] ${msg}`)
+        ),
+        ConsoleStdout.lineBuffered((msg) =>
+          console.error(`[WASI stderr] ${msg}`)
+        ),
+        // Pass the plain text ledger via /in
+        new PreopenDirectory("/", [["in", in_file]]),
+      ];
+      const options = { debug: false };
+      const wasi = new WASI(args, env, fds, options);
+
+      // See
+      // https://ghc.gitlab.haskell.org/ghc/doc/users_guide/wasm.html#the-javascript-api
+      // for explanation of the knot-tying here.
+      const instance_exports = {};
+      const { instance } = await WebAssembly.instantiateStreaming(
+        fetch("./dist/lesson2.wasm"),
+        {
+          wasi_snapshot_preview1: wasi.wasiImport,
+          ghc_wasm_jsffi: ghc_wasm_jsffi(instance_exports),
+        }
+      );
+      Object.assign(instance_exports, instance.exports);
+
+      // The wasm module that uses JSFFI is a reactor now, once
+      // initialized the same instance can be reused.
+      wasi.initialize(instance);
+
+      // Wait for the DOM to be ready
+      if (document.readyState === "loading") {
+        await new Promise((res) =>
+          document.addEventListener("DOMContentLoaded", res, { once: true })
+        );
+      }
+
+      const ledger = document.getElementById("ledger");
+      ledger.addEventListener("input", () => {
+        in_file.data = new TextEncoder().encode(ledger.value);
+        instance_exports.updateTable();
+      });
+      ledger.dispatchEvent(new Event("input"));
+    </script>
+  </head>
+  <body>
+    <h1>hledger</h1>
+
+    <label for="ledger">plain text ledger</label><br />
+    <textarea id="ledger" spellcheck="false"></textarea>
+
+    <table id="table"></table>
+  </body>
+</html>

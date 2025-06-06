@@ -1,0 +1,41 @@
+name: build
+
+on:
+  merge_group:
+  pull_request:
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: build
+    runs-on: ubuntu-24.04
+    permissions:
+      pages: write
+      id-token: write
+    steps:
+
+      - name: install-nix
+        uses: DeterminateSystems/nix-installer-action@v17
+
+      - name: checkout
+        uses: actions/checkout@v4
+
+      - name: build-lessons
+        run: |
+          nix develop -i -k HOME --command sh -c "wasm32-wasi-cabal update && exec ./build.sh"
+
+      - name: build-slides
+        run: |
+          nix shell nixpkgs#pandoc --command sh -c "cd slides && exec ./build.sh"
+
+      - name: upload-pages-artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: slides/dist
+          retention-days: 90
+
+      - name: deploy-pages
+        uses: actions/deploy-pages@v4

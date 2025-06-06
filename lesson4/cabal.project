@@ -1,0 +1,17 @@
+packages: .
+
+source-repository-package
+  type: git
+  location: https://github.com/amesgen/splitmix.git
+  tag: cea9e31bdd849eb0c17611bb99e33d590e126164
+
+-- optimization: False
+
+package aeson
+  flags: -ordered-keymap
+
+package tasty
+  flags: -unix
+
+package vector
+  flags: -boundschecks

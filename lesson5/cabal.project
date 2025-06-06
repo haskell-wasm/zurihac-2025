@@ -1,0 +1,11 @@
+packages: .
+
+package *
+  optimization: 2
+  ghc-options: -fdicts-cheap -fexpose-all-unfoldings -flate-dmd-anal -flate-specialise -fspecialise-aggressively
+
+package vector
+  flags: -boundschecks
+
+package zlib
+  flags: -non-blocking-ffi

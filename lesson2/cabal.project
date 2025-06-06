@@ -1,0 +1,22 @@
+packages: .
+
+source-repository-package
+  type: git
+  location: https://github.com/amesgen/splitmix.git
+  tag: cea9e31bdd849eb0c17611bb99e33d590e126164
+
+source-repository-package
+  type: git
+  location: https://github.com/haskell-wasm/terminal-size.git
+  tag: ede1cfc11d3a1d46f52d321236000ef7d440067c
+
+allow-newer: all:base
+
+package aeson
+  flags: -ordered-keymap
+
+package tasty
+  flags: -unix
+
+package vector
+  flags: -boundschecks
